@@ -59,7 +59,7 @@ export default function RegisterPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <CardTitle className="text-2xl font-bold">Create your account</CardTitle>
-          <CardDescription>Join BookBase Library Management</CardDescription>
+          <CardDescription>Join Read Nest — readnest.app</CardDescription>
         </CardHeader>
         <CardContent>
           <form className="space-y-4" onSubmit={handleSubmit}>

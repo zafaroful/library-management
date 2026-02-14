@@ -45,8 +45,8 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4 py-12 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-2xl font-bold">Sign in to BookBase</CardTitle>
-          <CardDescription>Library Management System</CardDescription>
+          <CardTitle className="text-2xl font-bold">Sign in to Read Nest</CardTitle>
+          <CardDescription>readnest.app</CardDescription>
         </CardHeader>
         <CardContent>
           <form className="space-y-4" onSubmit={handleSubmit}>

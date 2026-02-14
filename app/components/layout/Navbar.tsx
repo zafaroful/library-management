@@ -24,7 +24,7 @@ export function Navbar() {
         <div className="flex justify-between h-16">
           <div className="flex">
             <Link href="/dashboard" className="flex items-center px-2 py-2 text-xl font-bold text-indigo-600">
-              Library Management
+              Read Nest
             </Link>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
               <Link href="/dashboard" className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900 hover:text-indigo-600">

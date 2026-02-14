@@ -7,11 +7,13 @@ import { Button } from '@/components/ui/button';
 import { InputField } from '@/components/ui/input-field';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Label } from '@/components/ui/label';
 
 export default function NewBookPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [coverFile, setCoverFile] = useState<File | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     author: '',
@@ -27,19 +29,42 @@ export default function NewBookPage() {
     setLoading(true);
 
     try {
+      const total = Math.max(1, parseInt(formData.copies_total, 10) || 1);
+      const available = Math.max(
+        0,
+        Math.min(total, parseInt(formData.copies_available, 10) ?? total)
+      );
       const res = await fetch('/api/books', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...formData,
-          copies_total: parseInt(formData.copies_total, 10),
-          copies_available: parseInt(formData.copies_available, 10),
+          title: formData.title.trim(),
+          author: formData.author.trim(),
+          isbn: formData.isbn.trim() || undefined,
+          category: formData.category.trim() || undefined,
+          copies_total: total,
+          copies_available: available,
         }),
       });
 
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || 'Failed to create book');
+      }
+
+      const book = await res.json();
+
+      if (coverFile && book?.book_id) {
+        const form = new FormData();
+        form.append('cover', coverFile);
+        const uploadRes = await fetch(`/api/books/${book.book_id}/upload-cover`, {
+          method: 'POST',
+          body: form,
+        });
+        if (!uploadRes.ok) {
+          const data = await uploadRes.json();
+          throw new Error(data.error || 'Book created but cover upload failed');
+        }
       }
 
       router.push('/books');
@@ -100,6 +125,24 @@ export default function NewBookPage() {
                   setFormData({ ...formData, category: e.target.value })
                 }
               />
+
+              <div className="space-y-2">
+                <Label htmlFor="cover">Cover image</Label>
+                <input
+                  id="cover"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  className="text-muted-foreground file:bg-primary file:text-primary-foreground file:mr-4 file:rounded-md file:border-0 file:px-4 file:py-2 file:text-sm file:font-medium"
+                  onChange={(e) =>
+                    setCoverFile(e.target.files?.[0] ?? null)
+                  }
+                />
+                {coverFile && (
+                  <p className="text-sm text-muted-foreground">
+                    Selected: {coverFile.name}
+                  </p>
+                )}
+              </div>
 
               <InputField
                 label="Total Copies"

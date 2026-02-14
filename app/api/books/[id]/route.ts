@@ -6,11 +6,27 @@ import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { transformBook } from "@/lib/utils/transform";
 
+// Normalize optional number fields: empty string -> undefined, numeric string -> number
+const optionalInt = (schema: z.ZodNumber) =>
+  z.preprocess(
+    (val) =>
+      val === "" || val === undefined || val === null
+        ? undefined
+        : typeof val === "string"
+          ? (Number(val) || undefined)
+          : val,
+    schema.optional().nullable()
+  );
+
 const updateBookSchema = z.object({
   title: z.string().min(1).optional(),
   author: z.string().min(1).optional(),
   isbn: z.string().optional(),
   category: z.string().optional(),
+  cover_image_url: z.string().optional().nullable(),
+  description: z.string().optional().nullable(),
+  pages: optionalInt(z.number().int().positive()),
+  publication_year: optionalInt(z.number().int().min(1000).max(2100)),
   copies_total: z.number().int().positive().optional(),
   copies_available: z.number().int().nonnegative().optional(),
 });
@@ -77,16 +93,35 @@ export async function PUT(
       return NextResponse.json({ error: "Book not found" }, { status: 404 });
     }
 
+    // Normalize empty strings to null for optional DB columns
+    const optionalStr = (s: string | null | undefined) =>
+      s === "" || s === undefined ? null : s;
+
     // Prepare update data
-    const updateData: any = {};
+    const updateData: Record<string, unknown> = {};
     if (validatedData.title !== undefined)
       updateData.title = validatedData.title;
     if (validatedData.author !== undefined)
       updateData.author = validatedData.author;
     if (validatedData.isbn !== undefined)
-      updateData.isbn = validatedData.isbn || null;
+      updateData.isbn = optionalStr(validatedData.isbn) ?? null;
     if (validatedData.category !== undefined)
-      updateData.category = validatedData.category || null;
+      updateData.category = optionalStr(validatedData.category) ?? null;
+    if (validatedData.cover_image_url !== undefined)
+      updateData.coverImageUrl = optionalStr(validatedData.cover_image_url);
+    if (validatedData.description !== undefined)
+      updateData.description = optionalStr(validatedData.description);
+    if (validatedData.pages !== undefined && validatedData.pages !== null)
+      updateData.pages = validatedData.pages;
+    else if (validatedData.pages === null)
+      updateData.pages = null;
+    if (
+      validatedData.publication_year !== undefined &&
+      validatedData.publication_year !== null
+    )
+      updateData.publicationYear = validatedData.publication_year;
+    else if (validatedData.publication_year === null)
+      updateData.publicationYear = null;
     if (validatedData.copies_total !== undefined)
       updateData.copiesTotal = validatedData.copies_total;
     if (validatedData.copies_available !== undefined)

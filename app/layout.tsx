@@ -15,8 +15,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Library Management System",
-  description: "Comprehensive library management system with advanced features",
+  metadataBase: new URL("https://readnest.app"),
+  title: {
+    default: "Read Nest | Your Library, Simplified",
+    template: "%s | Read Nest",
+  },
+  description: "Browse, borrow, and manage books with Read Nest. Your cozy corner for reading.",
 };
 
 export default function RootLayout({

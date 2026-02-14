@@ -21,6 +21,10 @@ export interface Book {
   author: string;
   isbn?: string;
   category?: string;
+  cover_image_url?: string | null;
+  description?: string | null;
+  pages?: number | null;
+  publication_year?: number | null;
   availability_status: AvailabilityStatus;
   copies_total: number;
   copies_available: number;

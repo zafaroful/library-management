@@ -76,10 +76,10 @@ export function AppSidebar() {
       <SidebarHeader className="border-b border-sidebar-border">
         <SidebarMenu>
 <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={false} tooltip="BookBase">
+                <SidebarMenuButton asChild isActive={false} tooltip="Read Nest">
                   <Link href="/dashboard" className="font-semibold">
                     <BookOpen className="size-5" />
-                    <span>BookBase</span>
+                    <span>Read Nest</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

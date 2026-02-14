@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth/config";
 import { DashboardLayout } from "@/app/components/layout/DashboardLayout";
+import { DashboardDiscover } from "@/app/components/dashboard/DashboardDiscover";
 import { db } from "@/lib/db";
 import { books, loans, users, reservations } from "@/lib/db/schema";
 import { eq, lt, and, sql } from "drizzle-orm";
@@ -70,85 +71,85 @@ export default async function DashboardPage() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        {isLibrarian && (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center gap-2 space-y-0 pb-2">
+                <BookOpen className="size-5 text-muted-foreground" />
+                <span className="text-sm font-medium text-muted-foreground">
+                  Total Books
+                </span>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold">{stats.totalBooks}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center gap-2 space-y-0 pb-2">
+                <ClipboardList className="size-5 text-muted-foreground" />
+                <span className="text-sm font-medium text-muted-foreground">
+                  Active Loans
+                </span>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold">{stats.activeLoans}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center gap-2 space-y-0 pb-2">
+                <Users className="size-5 text-muted-foreground" />
+                <span className="text-sm font-medium text-muted-foreground">
+                  Total Users
+                </span>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold">{stats.totalUsers}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center gap-2 space-y-0 pb-2">
+                <AlertTriangle className="size-5 text-destructive" />
+                <span className="text-sm font-medium text-muted-foreground">
+                  Overdue Loans
+                </span>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold text-destructive">
+                  {stats.overdueLoans}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {isLibrarian ? (
-            <>
-              <Card>
-                <CardHeader className="flex flex-row items-center gap-2 space-y-0 pb-2">
-                  <BookOpen className="size-5 text-muted-foreground" />
-                  <span className="text-sm font-medium text-muted-foreground">
-                    Total Books
-                  </span>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-bold">{stats.totalBooks}</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center gap-2 space-y-0 pb-2">
-                  <ClipboardList className="size-5 text-muted-foreground" />
-                  <span className="text-sm font-medium text-muted-foreground">
-                    Active Loans
-                  </span>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-bold">{stats.activeLoans}</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center gap-2 space-y-0 pb-2">
-                  <Users className="size-5 text-muted-foreground" />
-                  <span className="text-sm font-medium text-muted-foreground">
-                    Total Users
-                  </span>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-bold">{stats.totalUsers}</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center gap-2 space-y-0 pb-2">
-                  <AlertTriangle className="size-5 text-destructive" />
-                  <span className="text-sm font-medium text-muted-foreground">
-                    Overdue Loans
-                  </span>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-bold text-destructive">
-                    {stats.overdueLoans}
-                  </p>
-                </CardContent>
-              </Card>
-            </>
-          ) : (
-            <>
-              <Card>
-                <CardHeader className="flex flex-row items-center gap-2 space-y-0 pb-2">
-                  <ClipboardList className="size-5 text-muted-foreground" />
-                  <span className="text-sm font-medium text-muted-foreground">
-                    My Loans
-                  </span>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-bold">{stats.myLoans}</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center gap-2 space-y-0 pb-2">
-                  <BookMarked className="size-5 text-muted-foreground" />
-                  <span className="text-sm font-medium text-muted-foreground">
-                    My Reservations
-                  </span>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-bold">{stats.myReservations}</p>
-                </CardContent>
-              </Card>
-            </>
-          )}
-        </div>
+        {!isLibrarian && (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Card>
+              <CardHeader className="flex flex-row items-center gap-2 space-y-0 pb-2">
+                <ClipboardList className="size-5 text-muted-foreground" />
+                <span className="text-sm font-medium text-muted-foreground">
+                  My Loans
+                </span>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold">{stats.myLoans}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center gap-2 space-y-0 pb-2">
+                <BookMarked className="size-5 text-muted-foreground" />
+                <span className="text-sm font-medium text-muted-foreground">
+                  My Reservations
+                </span>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold">{stats.myReservations}</p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        <DashboardDiscover />
       </div>
     </DashboardLayout>
   );
