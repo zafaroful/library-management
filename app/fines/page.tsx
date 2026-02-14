@@ -2,7 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/app/components/layout/DashboardLayout';
-import { Button } from '@/app/components/ui/Button';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useSession } from 'next-auth/react';
 
 interface FineWithDetails {
@@ -56,83 +66,100 @@ export default function FinesPage() {
 
       if (!res.ok) throw new Error('Failed to update fine');
       fetchFines();
-    } catch (error: any) {
-      alert(error.message);
+    } catch (error: unknown) {
+      alert(error instanceof Error ? error.message : 'Failed to update fine');
     }
   };
 
-  const isLibrarian = ['Admin', 'Librarian'].includes((session?.user as any)?.role || '');
+  const isLibrarian = ['Admin', 'Librarian'].includes(
+    (session?.user as { role?: string })?.role || ''
+  );
 
   return (
     <DashboardLayout>
-      <div className="px-4 py-6 sm:px-0">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Fines</h1>
+      <div className="space-y-6">
+        <h1 className="text-3xl font-bold tracking-tight">Fines</h1>
 
-        <div className="bg-white shadow rounded-lg p-4 mb-6">
-          <select
-            className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="">All Statuses</option>
-            <option value="Paid">Paid</option>
-            <option value="Unpaid">Unpaid</option>
-          </select>
-        </div>
+        <Card>
+          <CardContent className="pt-6">
+            <Select
+              value={statusFilter || 'all'}
+              onValueChange={(v) => setStatusFilter(v === 'all' ? '' : v)}
+            >
+              <SelectTrigger className="w-full max-w-xs">
+                <SelectValue placeholder="All Statuses" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="Paid">Paid</SelectItem>
+                <SelectItem value="Unpaid">Unpaid</SelectItem>
+              </SelectContent>
+            </Select>
+          </CardContent>
+        </Card>
 
         {loading ? (
-          <div className="text-center py-12">Loading...</div>
+          <Card>
+            <CardContent className="py-12">
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-20 w-full" />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         ) : fines.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">No fines found</div>
+          <Card>
+            <CardContent className="py-12 text-center text-muted-foreground">
+              No fines found
+            </CardContent>
+          </Card>
         ) : (
-          <div className="bg-white shadow overflow-hidden sm:rounded-md">
-            <ul className="divide-y divide-gray-200">
+          <Card>
+            <ul className="divide-y">
               {fines.map((fine) => (
                 <li key={fine.fine_id}>
-                  <div className="px-4 py-4 sm:px-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <h3 className="text-lg font-medium text-gray-900">
-                          {fine.loan?.book?.title || 'Unknown Book'}
-                        </h3>
-                        {isLibrarian && (
-                          <p className="mt-1 text-sm text-gray-500">
-                            Borrower: {fine.loan?.user?.name || 'Unknown User'}
-                          </p>
-                        )}
-                        <p className="mt-1 text-sm text-gray-500">
-                          Due Date: {fine.loan?.due_date || 'N/A'}
+                  <div className="flex flex-col gap-2 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-medium">
+                        {fine.loan?.book?.title || 'Unknown Book'}
+                      </h3>
+                      {isLibrarian && (
+                        <p className="text-sm text-muted-foreground">
+                          Borrower: {fine.loan?.user?.name || 'Unknown User'}
                         </p>
-                      </div>
-                      <div className="ml-4 text-right">
-                        <p className="text-lg font-semibold text-gray-900">${fine.amount.toFixed(2)}</p>
-                        <span className={`mt-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          fine.payment_status === 'Paid'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}>
-                          {fine.payment_status}
-                        </span>
-                        {fine.payment_status === 'Unpaid' && (
-                          <div className="mt-2">
-                            <Button
-                              variant="primary"
-                              onClick={() => handlePayFine(fine.fine_id)}
-                            >
-                              Mark as Paid
-                            </Button>
-                          </div>
-                        )}
-                      </div>
+                      )}
+                      <p className="text-sm text-muted-foreground">
+                        Due Date: {fine.loan?.due_date || 'N/A'}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 flex-col items-end gap-2">
+                      <p className="text-lg font-semibold">
+                        ${fine.amount.toFixed(2)}
+                      </p>
+                      <Badge
+                        variant={
+                          fine.payment_status === 'Paid' ? 'default' : 'destructive'
+                        }
+                      >
+                        {fine.payment_status}
+                      </Badge>
+                      {fine.payment_status === 'Unpaid' && (
+                        <Button
+                          size="sm"
+                          onClick={() => handlePayFine(fine.fine_id)}
+                        >
+                          Mark as Paid
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </li>
               ))}
             </ul>
-          </div>
+          </Card>
         )}
       </div>
     </DashboardLayout>
   );
 }
-

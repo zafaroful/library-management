@@ -1,18 +1,22 @@
-'use client';
+"use client";
 
-import { ReactNode } from 'react';
-import { Navbar } from './Navbar';
-import { Chatbot } from '@/app/components/chatbot/Chatbot';
+import { ReactNode } from "react";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { AppSidebar } from "./AppSidebar";
+import { AppHeader } from "./AppHeader";
+import { Chatbot } from "@/app/components/chatbot/Chatbot";
 
 export function DashboardLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        {children}
-      </main>
-      <Chatbot />
-    </div>
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        <AppHeader />
+        <main className="flex-1 overflow-auto bg-muted/30 p-4 md:p-6">
+          <div className="mx-auto max-w-7xl">{children}</div>
+        </main>
+      </SidebarInset>
+      {/* <Chatbot /> */}
+    </SidebarProvider>
   );
 }
-

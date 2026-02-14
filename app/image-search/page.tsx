@@ -2,7 +2,11 @@
 
 import { useState } from 'react';
 import { DashboardLayout } from '@/app/components/layout/DashboardLayout';
-import { Button } from '@/app/components/ui/Button';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Book } from '@/lib/types/database';
 import Link from 'next/link';
 
@@ -46,8 +50,8 @@ export default function ImageSearchPage() {
 
       const data = await res.json();
       setMatchedBooks(data.matchedBooks || []);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to search');
     } finally {
       setLoading(false);
     }
@@ -55,79 +59,94 @@ export default function ImageSearchPage() {
 
   return (
     <DashboardLayout>
-      <div className="px-4 py-6 sm:px-0 max-w-4xl">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Image Search</h1>
+      <div className="max-w-4xl space-y-6">
+        <h1 className="text-3xl font-bold tracking-tight">Image Search</h1>
 
-        <div className="bg-white shadow rounded-lg p-6 mb-6">
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Upload Book Cover or Barcode Image
-              </label>
+        <Card>
+          <CardHeader>
+            <CardTitle>Upload Book Cover or Barcode</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="image-upload">Image file</Label>
               <input
+                id="image-upload"
                 type="file"
                 accept="image/*"
                 onChange={handleFileChange}
-                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                className="text-muted-foreground file:bg-primary file:text-primary-foreground file:mr-4 file:rounded-md file:border-0 file:px-4 file:py-2 file:text-sm file:font-medium"
               />
             </div>
 
             {file && (
-              <div className="mt-4">
-                <p className="text-sm text-gray-600">Selected: {file.name}</p>
+              <div>
+                <p className="text-sm text-muted-foreground">
+                  Selected: {file.name}
+                </p>
                 {file.type.startsWith('image/') && (
                   <img
                     src={URL.createObjectURL(file)}
                     alt="Preview"
-                    className="mt-2 max-w-xs rounded-lg"
+                    className="mt-2 max-w-xs rounded-lg border"
                   />
                 )}
               </div>
             )}
 
             {error && (
-              <div className="rounded-md bg-red-50 p-4">
-                <p className="text-sm text-red-800">{error}</p>
-              </div>
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
             )}
 
             <Button onClick={handleSearch} disabled={!file || loading}>
               {loading ? 'Searching...' : 'Search Books'}
             </Button>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {matchedBooks.length > 0 && (
-          <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">Matched Books</h2>
-            <ul className="divide-y divide-gray-200">
-              {matchedBooks.map((book) => (
-                <li key={book.book_id} className="py-4">
-                  <Link href={`/books/${book.book_id}`} className="block hover:bg-gray-50 p-4 rounded">
-                    <h3 className="text-lg font-medium text-indigo-600">{book.title}</h3>
-                    <p className="text-sm text-gray-500">by {book.author}</p>
-                    {book.category && (
-                      <span className="mt-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                        {book.category}
-                      </span>
-                    )}
-                    <p className="mt-2 text-sm text-gray-600">
-                      Available: {book.copies_available} / {book.copies_total}
-                    </p>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Matched Books</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="divide-y">
+                {matchedBooks.map((book) => (
+                  <li key={book.book_id}>
+                    <Link
+                      href={`/books/${book.book_id}`}
+                      className="block rounded-md p-4 transition-colors hover:bg-muted/50"
+                    >
+                      <h3 className="font-medium text-primary">{book.title}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        by {book.author}
+                      </p>
+                      {book.category && (
+                        <Badge variant="secondary" className="mt-1">
+                          {book.category}
+                        </Badge>
+                      )}
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Available: {book.copies_available} / {book.copies_total}
+                      </p>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
         )}
 
         {matchedBooks.length === 0 && !loading && file && (
-          <div className="bg-white shadow rounded-lg p-6 text-center text-gray-500">
-            No matching books found. Try uploading a clearer image or search manually.
-          </div>
+          <Card>
+            <CardContent className="py-12 text-center text-muted-foreground">
+              No matching books found. Try uploading a clearer image or search
+              manually.
+            </CardContent>
+          </Card>
         )}
       </div>
     </DashboardLayout>
   );
 }
-

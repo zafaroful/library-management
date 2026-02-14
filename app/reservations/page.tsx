@@ -2,7 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/app/components/layout/DashboardLayout';
-import { Button } from '@/app/components/ui/Button';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { ReservationWithDetails } from '@/lib/types/database';
 import { useSession } from 'next-auth/react';
 
@@ -32,7 +42,10 @@ export default function ReservationsPage() {
     }
   };
 
-  const handleStatusChange = async (reservationId: string, newStatus: string) => {
+  const handleStatusChange = async (
+    reservationId: string,
+    newStatus: string
+  ) => {
     try {
       const res = await fetch(`/api/reservations/${reservationId}`, {
         method: 'PATCH',
@@ -42,8 +55,10 @@ export default function ReservationsPage() {
 
       if (!res.ok) throw new Error('Failed to update reservation');
       fetchReservations();
-    } catch (error: any) {
-      alert(error.message);
+    } catch (error: unknown) {
+      alert(
+        error instanceof Error ? error.message : 'Failed to update reservation'
+      );
     }
   };
 
@@ -57,96 +72,125 @@ export default function ReservationsPage() {
 
       if (!res.ok) throw new Error('Failed to cancel reservation');
       fetchReservations();
-    } catch (error: any) {
-      alert(error.message);
+    } catch (error: unknown) {
+      alert(
+        error instanceof Error ? error.message : 'Failed to cancel reservation'
+      );
     }
   };
 
-  const isLibrarian = ['Admin', 'Librarian'].includes((session?.user as any)?.role || '');
+  const isLibrarian = ['Admin', 'Librarian'].includes(
+    (session?.user as { role?: string })?.role || ''
+  );
 
   return (
     <DashboardLayout>
-      <div className="px-4 py-6 sm:px-0">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Reservations</h1>
+      <div className="space-y-6">
+        <h1 className="text-3xl font-bold tracking-tight">Reservations</h1>
 
-        <div className="bg-white shadow rounded-lg p-4 mb-6">
-          <select
-            className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="">All Statuses</option>
-            <option value="Pending">Pending</option>
-            <option value="Collected">Collected</option>
-            <option value="Cancelled">Cancelled</option>
-          </select>
-        </div>
+        <Card>
+          <CardContent className="pt-6">
+            <Select
+              value={statusFilter || 'all'}
+              onValueChange={(v) => setStatusFilter(v === 'all' ? '' : v)}
+            >
+              <SelectTrigger className="w-full max-w-xs">
+                <SelectValue placeholder="All Statuses" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="Pending">Pending</SelectItem>
+                <SelectItem value="Collected">Collected</SelectItem>
+                <SelectItem value="Cancelled">Cancelled</SelectItem>
+              </SelectContent>
+            </Select>
+          </CardContent>
+        </Card>
 
         {loading ? (
-          <div className="text-center py-12">Loading...</div>
+          <Card>
+            <CardContent className="py-12">
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-20 w-full" />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         ) : reservations.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">No reservations found</div>
+          <Card>
+            <CardContent className="py-12 text-center text-muted-foreground">
+              No reservations found
+            </CardContent>
+          </Card>
         ) : (
-          <div className="bg-white shadow overflow-hidden sm:rounded-md">
-            <ul className="divide-y divide-gray-200">
+          <Card>
+            <ul className="divide-y">
               {reservations.map((reservation) => (
                 <li key={reservation.reservation_id}>
-                  <div className="px-4 py-4 sm:px-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <h3 className="text-lg font-medium text-indigo-600">
-                          {reservation.book?.title || 'Unknown Book'}
-                        </h3>
-                        <p className="mt-1 text-sm text-gray-500">
-                          by {reservation.book?.author || 'Unknown Author'}
+                  <div className="flex flex-col gap-2 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-medium text-primary">
+                        {reservation.book?.title || 'Unknown Book'}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        by {reservation.book?.author || 'Unknown Author'}
+                      </p>
+                      {isLibrarian && (
+                        <p className="text-sm text-muted-foreground">
+                          Reserved by: {reservation.user?.name || 'Unknown User'}
                         </p>
-                        {isLibrarian && (
-                          <p className="mt-1 text-sm text-gray-500">
-                            Reserved by: {reservation.user?.name || 'Unknown User'}
-                          </p>
+                      )}
+                      <p className="text-sm text-muted-foreground">
+                        Reserved on: {reservation.reservation_date}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 flex-col items-end gap-2">
+                      <Badge
+                        variant={
+                          reservation.status === 'Collected'
+                            ? 'default'
+                            : reservation.status === 'Pending'
+                              ? 'secondary'
+                              : 'outline'
+                        }
+                      >
+                        {reservation.status}
+                      </Badge>
+                      <div className="flex gap-2">
+                        {reservation.status === 'Pending' && isLibrarian && (
+                          <Button
+                            size="sm"
+                            onClick={() =>
+                              handleStatusChange(
+                                reservation.reservation_id,
+                                'Collected'
+                              )
+                            }
+                          >
+                            Mark Collected
+                          </Button>
                         )}
-                        <p className="mt-1 text-sm text-gray-500">
-                          Reserved on: {reservation.reservation_date}
-                        </p>
-                      </div>
-                      <div className="ml-4 text-right">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          reservation.status === 'Pending'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : reservation.status === 'Collected'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {reservation.status}
-                        </span>
-                        <div className="mt-2 flex space-x-2">
-                          {reservation.status === 'Pending' && isLibrarian && (
-                            <Button
-                              variant="primary"
-                              onClick={() => handleStatusChange(reservation.reservation_id, 'Collected')}
-                            >
-                              Mark Collected
-                            </Button>
-                          )}
-                          {reservation.status === 'Pending' && (
-                            <Button
-                              variant="danger"
-                              onClick={() => handleCancel(reservation.reservation_id)}
-                            >
-                              Cancel
-                            </Button>
-                          )}
-                        </div>
+                        {reservation.status === 'Pending' && (
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() =>
+                              handleCancel(reservation.reservation_id)
+                            }
+                          >
+                            Cancel
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>
                 </li>
               ))}
             </ul>
-          </div>
+          </Card>
         )}
       </div>
     </DashboardLayout>
   );
 }
-

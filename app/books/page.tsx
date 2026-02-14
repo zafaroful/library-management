@@ -3,8 +3,18 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { DashboardLayout } from '@/app/components/layout/DashboardLayout';
-import { Button } from '@/app/components/ui/Button';
-import { Input } from '@/app/components/ui/Input';
+import { Button } from '@/components/ui/button';
+import { InputField } from '@/components/ui/input-field';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Book } from '@/lib/types/database';
 
 export default function BooksPage() {
@@ -46,7 +56,11 @@ export default function BooksPage() {
     try {
       const res = await fetch('/api/books');
       const data = await res.json();
-      const uniqueCategories = [...new Set(data.books?.map((b: Book) => b.category).filter(Boolean) as string[])];
+      const uniqueCategories = [
+        ...new Set(
+          (data.books?.map((b: Book) => b.category).filter(Boolean) as string[]) || []
+        ),
+      ];
       setCategories(uniqueCategories);
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -55,101 +69,128 @@ export default function BooksPage() {
 
   return (
     <DashboardLayout>
-      <div className="px-4 py-6 sm:px-0">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Books</h1>
-          <Link href="/books/new">
-            <Button>Add New Book</Button>
-          </Link>
+      <div className="space-y-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <h1 className="text-3xl font-bold tracking-tight">Books</h1>
+          <Button asChild>
+            <Link href="/books/new">Add New Book</Link>
+          </Button>
         </div>
 
-        <div className="bg-white shadow rounded-lg p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Input
-              label="Search"
-              placeholder="Search by title, author, or ISBN..."
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-            />
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-              <select
-                className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                value={category}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <InputField
+                label="Search"
+                placeholder="Search by title, author, or ISBN..."
+                value={search}
                 onChange={(e) => {
-                  setCategory(e.target.value);
+                  setSearch(e.target.value);
                   setPage(1);
                 }}
-              >
-                <option value="">All Categories</option>
-                {categories.map((cat) => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
+              />
+              <div className="space-y-2">
+                <label className="text-sm font-medium leading-none">Category</label>
+                <Select
+                  value={category || 'all'}
+                  onValueChange={(v) => {
+                    setCategory(v === 'all' ? '' : v);
+                    setPage(1);
+                  }}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="All Categories" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat} value={cat}>
+                        {cat}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {loading ? (
-          <div className="text-center py-12">Loading...</div>
+          <Card>
+            <CardContent className="py-12">
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-16 w-full" />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         ) : books.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">No books found</div>
+          <Card>
+            <CardContent className="py-12 text-center text-muted-foreground">
+              No books found
+            </CardContent>
+          </Card>
         ) : (
           <>
-            <div className="bg-white shadow overflow-hidden sm:rounded-md">
-              <ul className="divide-y divide-gray-200">
+            <Card>
+              <ul className="divide-y">
                 {books.map((book) => (
                   <li key={book.book_id}>
-                    <Link href={`/books/${book.book_id}`} className="block hover:bg-gray-50">
-                      <div className="px-4 py-4 sm:px-6">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <h3 className="text-lg font-medium text-indigo-600">{book.title}</h3>
-                            <p className="mt-1 text-sm text-gray-500">by {book.author}</p>
-                            {book.category && (
-                              <span className="mt-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                {book.category}
-                              </span>
-                            )}
-                          </div>
-                          <div className="ml-4 text-right">
-                            <p className="text-sm text-gray-500">
-                              Available: {book.copies_available} / {book.copies_total}
-                            </p>
-                            <span className={`mt-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              book.availability_status === 'Available' 
-                                ? 'bg-green-100 text-green-800' 
-                                : 'bg-red-100 text-red-800'
-                            }`}>
-                              {book.availability_status}
-                            </span>
-                          </div>
+                    <Link
+                      href={`/books/${book.book_id}`}
+                      className="block transition-colors hover:bg-muted/50"
+                    >
+                      <div className="flex flex-col gap-2 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="truncate font-medium text-primary">
+                            {book.title}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            by {book.author}
+                          </p>
+                          {book.category && (
+                            <Badge variant="secondary" className="mt-1">
+                              {book.category}
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex shrink-0 flex-col items-end gap-1">
+                          <p className="text-sm text-muted-foreground">
+                            Available: {book.copies_available} / {book.copies_total}
+                          </p>
+                          <Badge
+                            variant={
+                              book.availability_status === 'Available'
+                                ? 'default'
+                                : 'destructive'
+                            }
+                          >
+                            {book.availability_status}
+                          </Badge>
                         </div>
                       </div>
                     </Link>
                   </li>
                 ))}
               </ul>
-            </div>
+            </Card>
 
             {totalPages > 1 && (
-              <div className="mt-6 flex justify-center space-x-2">
+              <div className="flex items-center justify-center gap-2">
                 <Button
                   variant="outline"
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
                 >
                   Previous
                 </Button>
-                <span className="px-4 py-2 text-sm text-gray-700">
+                <span className="text-sm text-muted-foreground">
                   Page {page} of {totalPages}
                 </span>
                 <Button
                   variant="outline"
-                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}
                 >
                   Next
@@ -162,4 +203,3 @@ export default function BooksPage() {
     </DashboardLayout>
   );
 }
-

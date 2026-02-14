@@ -2,7 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/app/components/layout/DashboardLayout';
-import { Button } from '@/app/components/ui/Button';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { LoanWithDetails } from '@/lib/types/database';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
@@ -46,100 +56,122 @@ export default function LoansPage() {
 
       if (!res.ok) throw new Error('Failed to return book');
       fetchLoans();
-    } catch (error: any) {
-      alert(error.message);
+    } catch (error: unknown) {
+      alert(error instanceof Error ? error.message : 'Failed to return');
     }
   };
 
-  const isLibrarian = ['Admin', 'Librarian'].includes((session?.user as any)?.role || '');
+  const isLibrarian = ['Admin', 'Librarian'].includes(
+    (session?.user as { role?: string })?.role || ''
+  );
 
   return (
     <DashboardLayout>
-      <div className="px-4 py-6 sm:px-0">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Loans</h1>
+      <div className="space-y-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <h1 className="text-3xl font-bold tracking-tight">Loans</h1>
           {isLibrarian && (
-            <Link href="/loans/new">
-              <Button>Issue New Loan</Button>
-            </Link>
+            <Button asChild>
+              <Link href="/loans/new">Issue New Loan</Link>
+            </Button>
           )}
         </div>
 
-        <div className="bg-white shadow rounded-lg p-4 mb-6">
-          <select
-            className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="">All Statuses</option>
-            <option value="Borrowed">Borrowed</option>
-            <option value="Returned">Returned</option>
-          </select>
-        </div>
+        <Card>
+          <CardContent className="pt-6">
+            <Select
+              value={statusFilter || 'all'}
+              onValueChange={(v) => setStatusFilter(v === 'all' ? '' : v)}
+            >
+              <SelectTrigger className="w-full max-w-xs">
+                <SelectValue placeholder="All Statuses" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="Borrowed">Borrowed</SelectItem>
+                <SelectItem value="Returned">Returned</SelectItem>
+              </SelectContent>
+            </Select>
+          </CardContent>
+        </Card>
 
         {loading ? (
-          <div className="text-center py-12">Loading...</div>
+          <Card>
+            <CardContent className="py-12">
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-20 w-full" />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         ) : loans.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">No loans found</div>
+          <Card>
+            <CardContent className="py-12 text-center text-muted-foreground">
+              No loans found
+            </CardContent>
+          </Card>
         ) : (
-          <div className="bg-white shadow overflow-hidden sm:rounded-md">
-            <ul className="divide-y divide-gray-200">
+          <Card>
+            <ul className="divide-y">
               {loans.map((loan) => {
-                const daysOverdue = loan.status === 'Borrowed' ? calculateDaysOverdue(loan.due_date) : 0;
+                const daysOverdue =
+                  loan.status === 'Borrowed'
+                    ? calculateDaysOverdue(loan.due_date)
+                    : 0;
                 const isOverdue = daysOverdue > 0;
 
                 return (
                   <li key={loan.loan_id}>
-                    <div className="px-4 py-4 sm:px-6">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <h3 className="text-lg font-medium text-indigo-600">
-                            {loan.book?.title || 'Unknown Book'}
-                          </h3>
-                          <p className="mt-1 text-sm text-gray-500">
-                            by {loan.book?.author || 'Unknown Author'}
-                          </p>
-                          <p className="mt-1 text-sm text-gray-500">
-                            Borrower: {loan.user?.name || 'Unknown User'}
-                          </p>
-                          <div className="mt-2 flex space-x-4 text-sm text-gray-500">
-                            <span>Borrowed: {loan.borrow_date}</span>
-                            <span>Due: {loan.due_date}</span>
-                            {loan.return_date && <span>Returned: {loan.return_date}</span>}
-                          </div>
-                        </div>
-                        <div className="ml-4 text-right">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            loan.status === 'Borrowed'
-                              ? isOverdue
-                                ? 'bg-red-100 text-red-800'
-                                : 'bg-yellow-100 text-yellow-800'
-                              : 'bg-green-100 text-green-800'
-                          }`}>
-                            {loan.status}
-                            {isOverdue && ` (${daysOverdue} days overdue)`}
-                          </span>
-                          {loan.status === 'Borrowed' && isLibrarian && (
-                            <div className="mt-2">
-                              <Button
-                                variant="primary"
-                                onClick={() => handleReturn(loan.loan_id)}
-                              >
-                                Return
-                              </Button>
-                            </div>
+                    <div className="flex flex-col gap-2 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-medium text-primary">
+                          {loan.book?.title || 'Unknown Book'}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          by {loan.book?.author || 'Unknown Author'}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Borrower: {loan.user?.name || 'Unknown User'}
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-4 text-sm text-muted-foreground">
+                          <span>Borrowed: {loan.borrow_date}</span>
+                          <span>Due: {loan.due_date}</span>
+                          {loan.return_date && (
+                            <span>Returned: {loan.return_date}</span>
                           )}
                         </div>
+                      </div>
+                      <div className="flex shrink-0 flex-col items-end gap-2">
+                        <Badge
+                          variant={
+                            loan.status === 'Returned'
+                              ? 'default'
+                              : isOverdue
+                                ? 'destructive'
+                                : 'secondary'
+                          }
+                        >
+                          {loan.status}
+                          {isOverdue && ` (${daysOverdue} days overdue)`}
+                        </Badge>
+                        {loan.status === 'Borrowed' && isLibrarian && (
+                          <Button
+                            size="sm"
+                            onClick={() => handleReturn(loan.loan_id)}
+                          >
+                            Return
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </li>
                 );
               })}
             </ul>
-          </div>
+          </Card>
         )}
       </div>
     </DashboardLayout>
   );
 }
-
