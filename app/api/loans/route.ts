@@ -10,8 +10,8 @@ import { transformLoanWithDetails } from "@/lib/utils/transform";
 const loanSchema = z.object({
   book_id: z.string().uuid(),
   user_id: z.string().uuid(),
-  borrow_date: z.string().optional(),
-  due_date: z.string().optional(),
+  borrow_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  due_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 });
 
 export async function GET(request: NextRequest) {
@@ -126,20 +126,25 @@ export async function POST(request: NextRequest) {
     }
 
     const borrowDate = validatedData.borrow_date
-      ? new Date(validatedData.borrow_date)
+      ? new Date(`${validatedData.borrow_date}T00:00:00`)
       : new Date();
     const dueDate = validatedData.due_date
-      ? new Date(validatedData.due_date)
+      ? new Date(`${validatedData.due_date}T00:00:00`)
       : calculateDueDate(borrowDate);
+    const now = new Date();
 
     const [newLoan] = await db
       .insert(loans)
       .values({
+        // Avoid relying on DB defaults that may be missing
+        loanId: crypto.randomUUID(),
         bookId: validatedData.book_id,
         userId: validatedData.user_id,
         borrowDate: formatDate(borrowDate),
         dueDate: formatDate(dueDate),
         status: "Borrowed",
+        createdAt: now,
+        updatedAt: now,
       })
       .returning();
 
@@ -164,6 +169,8 @@ export async function POST(request: NextRequest) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.issues }, { status: 400 });
     }
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const message =
+      error?.cause?.message || error?.message || "Failed to create loan";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

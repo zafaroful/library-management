@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useSession } from 'next-auth/react';
 import { DashboardLayout } from '@/app/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,11 +24,16 @@ import {
 } from 'recharts';
 
 export default function ReportsPage() {
+  const { data: session } = useSession();
   const [reportType, setReportType] = useState<string>('');
   const [reportData, setReportData] = useState<Record<string, unknown> | null>(
     null
   );
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const isLibrarian = ['Admin', 'Librarian'].includes(
+    (session?.user as { role?: string })?.role || ''
+  );
 
   const generateReport = async () => {
     if (!reportType) return;
@@ -35,15 +41,60 @@ export default function ReportsPage() {
     setLoading(true);
     try {
       const res = await fetch(`/api/reports?type=${reportType}`);
-      if (!res.ok) throw new Error('Failed to generate report');
-      const data = await res.json();
-      setReportData(data);
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        if (res.status === 403) {
+          throw new Error(
+            'You do not have permission to generate reports. Please use an Admin or Librarian account.'
+          );
+        }
+        throw new Error(
+          (payload as { error?: string })?.error || 'Failed to generate report'
+        );
+      }
+      setReportData(payload);
     } catch (error: unknown) {
       alert(
         error instanceof Error ? error.message : 'Failed to generate report'
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  const exportCsv = async () => {
+    if (!reportType) return;
+
+    setExporting(true);
+    try {
+      const res = await fetch(`/api/reports?type=${reportType}&format=csv`);
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        if (res.status === 403) {
+          throw new Error(
+            'You do not have permission to export reports. Please use an Admin or Librarian account.'
+          );
+        }
+        throw new Error(
+          (payload as { error?: string })?.error || 'Failed to export CSV'
+        );
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const contentDisposition = res.headers.get('Content-Disposition');
+      const filenameMatch = contentDisposition?.match(/filename="(.+)"/);
+      link.href = url;
+      link.download = filenameMatch?.[1] || `${reportType}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error: unknown) {
+      alert(error instanceof Error ? error.message : 'Failed to export CSV');
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -229,6 +280,14 @@ export default function ReportsPage() {
           Reports & Analytics
         </h1>
 
+        {!isLibrarian && (
+          <Card>
+            <CardContent className="py-8 text-sm text-muted-foreground">
+              Reports are only available for Admin and Librarian accounts.
+            </CardContent>
+          </Card>
+        )}
+
         <Card>
           <CardContent className="pt-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
@@ -249,12 +308,21 @@ export default function ReportsPage() {
                   <SelectItem value="active_users">Active Users</SelectItem>
                 </SelectContent>
               </Select>
-              <Button
-                onClick={generateReport}
-                disabled={!reportType || loading}
-              >
-                {loading ? 'Generating...' : 'Generate Report'}
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  onClick={generateReport}
+                  disabled={!isLibrarian || !reportType || loading || exporting}
+                >
+                  {loading ? 'Generating...' : 'Generate Report'}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={exportCsv}
+                  disabled={!isLibrarian || !reportType || loading || exporting}
+                >
+                  {exporting ? 'Exporting...' : 'Export CSV'}
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

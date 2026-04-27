@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { books, bookRecitation } from "@/lib/db/schema";
 import { z } from "zod";
 import { eq } from "drizzle-orm";
+import { transformRecitationWithBook } from "@/lib/utils/transform";
 
 // Placeholder for TTS API integration
 // You can integrate with Google TTS or AWS Polly here
@@ -85,14 +86,13 @@ export async function POST(request: NextRequest) {
       .where(eq(bookRecitation.recitationId, recitation.recitationId))
       .limit(1);
 
-    const formattedRecitation = {
-      ...recitationWithBook.recitation,
-      book: recitationWithBook.book,
-    };
+    const formattedRecitation = transformRecitationWithBook(
+      recitationWithBook
+    );
 
     return NextResponse.json({
       recitation: formattedRecitation,
-      audioUrl: audioPath, // In production, return actual storage URL
+      audio_url: audioPath,
     });
   } catch (error: any) {
     if (error instanceof z.ZodError) {

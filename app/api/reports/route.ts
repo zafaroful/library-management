@@ -10,6 +10,96 @@ import {
 } from "@/lib/db/schema";
 import { eq, lt, sql, asc, desc, and } from "drizzle-orm";
 
+function escapeCsvValue(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  const stringValue = String(value);
+  if (/[",\n]/.test(stringValue)) {
+    return `"${stringValue.replace(/"/g, '""')}"`;
+  }
+  return stringValue;
+}
+
+function buildCsvContent(
+  reportType: string,
+  reportData: Record<string, any>
+): string {
+  let rows: unknown[][] = [];
+
+  switch (reportType) {
+    case "borrowing_trends": {
+      const trends = Object.entries(reportData.trends || {}).map(
+        ([month, values]) => {
+          const trend = values as { borrowed?: number; returned?: number };
+          return [month, trend.borrowed ?? 0, trend.returned ?? 0];
+        }
+      );
+      rows = [["Month", "Borrowed", "Returned"], ...trends];
+      break;
+    }
+
+    case "popular_books": {
+      rows = [
+        ["Book Title", "Author", "Loan Count"],
+        ...((reportData.popularBooks as any[]) || []).map((item) => [
+          item.book?.title ?? "",
+          item.book?.author ?? "",
+          item.count ?? 0,
+        ]),
+      ];
+      break;
+    }
+
+    case "overdue": {
+      rows = [
+        ["Loan ID", "Book Title", "Borrower", "Due Date", "Fine Amount"],
+        ...((reportData.overdueLoans as any[]) || []).map((loan) => [
+          loan.loanId ?? "",
+          loan.book?.title ?? "",
+          loan.user?.name ?? "",
+          loan.dueDate ?? "",
+          loan.fine?.amount ?? "",
+        ]),
+      ];
+      break;
+    }
+
+    case "fines_collected": {
+      rows = [
+        ["Metric", "Value"],
+        ["Total Collected", reportData.totalCollected ?? 0],
+        ["Total Unpaid", reportData.totalUnpaid ?? 0],
+        ["Paid Fines", reportData.paidCount ?? 0],
+        ["Unpaid Fines", reportData.unpaidCount ?? 0],
+      ];
+      break;
+    }
+
+    case "active_users": {
+      rows = [
+        ["User Name", "Email", "Active Loans"],
+        ...((reportData.activeUsers as any[]) || []).map((item) => [
+          item.user?.name ?? "",
+          item.user?.email ?? "",
+          item.count ?? 0,
+        ]),
+      ];
+      break;
+    }
+
+    default:
+      rows = [["Message"], ["No data available"]];
+  }
+
+  return rows
+    .map((row) => row.map((cell) => escapeCsvValue(cell)).join(","))
+    .join("\n");
+}
+
+function getCsvFilename(reportType: string) {
+  const date = new Date().toISOString().slice(0, 10);
+  return `${reportType}-${date}.csv`;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
@@ -26,6 +116,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const reportType = searchParams.get("type");
+    const format = searchParams.get("format");
 
     let reportData: any = {};
 
@@ -177,6 +268,20 @@ export async function GET(request: NextRequest) {
         reportData: reportData,
       })
       .returning();
+
+    if (format === "csv") {
+      const csvContent = buildCsvContent(reportType || "general", reportData);
+      return new NextResponse(csvContent, {
+        status: 200,
+        headers: {
+          "Content-Type": "text/csv; charset=utf-8",
+          "Content-Disposition": `attachment; filename="${getCsvFilename(
+            reportType || "report"
+          )}"`,
+          "Cache-Control": "no-store",
+        },
+      });
+    }
 
     return NextResponse.json({
       report: savedReport,

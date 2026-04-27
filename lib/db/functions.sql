@@ -83,8 +83,8 @@ BEGIN
         UPDATE public.books
         SET copies_available = copies_available - 1,
             availability_status = CASE 
-                WHEN copies_available - 1 <= 0 THEN 'Borrowed'
-                ELSE 'Available'
+                WHEN copies_available - 1 <= 0 THEN 'Borrowed'::availability_status
+                ELSE 'Available'::availability_status
             END
         WHERE book_id = NEW.book_id;
     ELSIF TG_OP = 'UPDATE' AND OLD.status = 'Borrowed' AND NEW.status = 'Returned' THEN
@@ -92,8 +92,8 @@ BEGIN
         UPDATE public.books
         SET copies_available = copies_available + 1,
             availability_status = CASE 
-                WHEN copies_available + 1 > 0 THEN 'Available'
-                ELSE 'Borrowed'
+                WHEN copies_available + 1 > 0 THEN 'Available'::availability_status
+                ELSE 'Borrowed'::availability_status
             END
         WHERE book_id = NEW.book_id;
     END IF;

@@ -103,3 +103,26 @@ export function transformFineWithDetails(row: any) {
   };
 }
 
+export function transformBookRecitation(recitation: any) {
+  if (!recitation) return null;
+  return {
+    recitation_id: recitation.recitationId,
+    book_id: recitation.bookId,
+    audio_file_path: recitation.audioFilePath,
+    recitation_type: recitation.recitationType,
+    created_at: recitation.createdAt?.toISOString?.() ?? recitation.createdAt,
+    updated_at: recitation.updatedAt?.toISOString?.() ?? recitation.updatedAt,
+  };
+}
+
+/** Join row: `{ recitation, book }` from Drizzle */
+export function transformRecitationWithBook(row: {
+  recitation: any;
+  book: any;
+}) {
+  if (!row?.recitation) return null;
+  return {
+    ...transformBookRecitation(row.recitation)!,
+    book: row.book ? transformBook(row.book) : undefined,
+  };
+}

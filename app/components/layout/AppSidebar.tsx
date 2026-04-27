@@ -101,7 +101,9 @@ export function AppSidebar() {
               {isAdmin && (
                 <NavItem href="/admin/users" label="Users" icon={Users} />
               )}
-              <NavItem href="/reports" label="Reports" icon={BarChart3} />
+              {isLibrarian && (
+                <NavItem href="/reports" label="Reports" icon={BarChart3} />
+              )}
               <NavItem href="/fines" label="Fines" icon={DollarSign} />
               <NavItem href="/image-search" label="Image Search" icon={Image} />
               <NavItem href="/recitation" label="Recitations" icon={Mic2} />
@@ -114,7 +116,7 @@ export function AppSidebar() {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Settings">
-                  <Link href="/dashboard">
+                  <Link href="/settings">
                     <Settings className="size-4" />
                     <span>Settings</span>
                   </Link>
@@ -122,7 +124,7 @@ export function AppSidebar() {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Support">
-                  <Link href="/dashboard">
+                  <Link href="/support">
                     <HelpCircle className="size-4" />
                     <span>Support</span>
                   </Link>

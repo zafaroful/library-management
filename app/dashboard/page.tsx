@@ -70,7 +70,7 @@ export default async function DashboardPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="dashboard-glass-card rounded-xl p-4 md:p-6 space-y-6">
         {isLibrarian && (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Card>

@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { bookRecitation, books } from "@/lib/db/schema";
 import { z } from "zod";
 import { eq, desc } from "drizzle-orm";
+import { transformRecitationWithBook } from "@/lib/utils/transform";
 
 const recitationSchema = z.object({
   book_id: z.string().uuid(),
@@ -35,10 +36,9 @@ export async function GET(request: NextRequest) {
           .orderBy(desc(bookRecitation.createdAt))
       : await baseQuery.orderBy(desc(bookRecitation.createdAt));
 
-    const formattedRecitations = data.map((row) => ({
-      ...row.recitation,
-      book: row.book,
-    }));
+    const formattedRecitations = data
+      .map((row) => transformRecitationWithBook(row))
+      .filter(Boolean);
 
     return NextResponse.json({ recitations: formattedRecitations });
   } catch (error: any) {
@@ -83,10 +83,15 @@ export async function POST(request: NextRequest) {
       .where(eq(bookRecitation.recitationId, newRecitation.recitationId))
       .limit(1);
 
-    const formattedRecitation = {
-      ...recitationWithBook.recitation,
-      book: recitationWithBook.book,
-    };
+    const formattedRecitation = transformRecitationWithBook(
+      recitationWithBook
+    );
+    if (!formattedRecitation) {
+      return NextResponse.json(
+        { error: "Failed to load recitation after insert" },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json(formattedRecitation, { status: 201 });
   } catch (error: any) {
