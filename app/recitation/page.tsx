@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+// 1. Import Suspense from react
+import { useEffect, useState, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -20,7 +21,8 @@ import {
 import { Label } from '@/components/ui/label';
 import { Book, BookRecitation } from '@/lib/types/database';
 
-export default function RecitationPage() {
+// 2. Rename your original function and remove 'export default'
+function RecitationContent() {
   const { data: session, status: sessionStatus } = useSession();
   const searchParams = useSearchParams();
   const role = (session?.user as { role?: string })?.role || '';
@@ -340,5 +342,18 @@ export default function RecitationPage() {
         )}
       </div>
     </DashboardLayout>
+  );
+}
+
+// 3. Create the new default export that wraps the content in Suspense
+export default function RecitationPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-screen items-center justify-center">
+        <p className="text-muted-foreground">Loading recitations...</p>
+      </div>
+    }>
+      <RecitationContent />
+    </Suspense>
   );
 }
