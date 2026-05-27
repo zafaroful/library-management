@@ -14,7 +14,6 @@ import { Book, LoanWithDetails } from "@/lib/types/database";
 import {
   Search,
   MoreHorizontal,
-  Share2,
   BookOpen,
   Star,
   Heart,
@@ -157,7 +156,7 @@ export function DashboardDiscover() {
               placeholder="Search for title, author, tags, etc."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              className="pl-9"
+              className="h-9 rounded-md border-border bg-background pl-9"
             />
           </div>
         </div>
@@ -182,7 +181,7 @@ export function DashboardDiscover() {
                     key={book.book_id}
                     type="button"
                     onClick={() => openBookDrawer(book)}
-                    className="flex w-28 shrink-0 flex-col items-center gap-2 text-left transition-opacity hover:opacity-90"
+                    className="flex w-28 shrink-0 flex-col items-start gap-2 text-left transition-opacity hover:opacity-90"
                   >
                     {book.cover_image_url ? (
                       <img

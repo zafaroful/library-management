@@ -38,7 +38,7 @@ export function AppHeader() {
     .slice(0, 2) || "U";
 
   return (
-    <header className="flex h-14 shrink-0 items-center gap-4 border-b bg-card px-4 md:px-6">
+    <header className="flex h-14 shrink-0 items-center gap-4 border-b bg-background px-4 md:px-6">
       <SidebarTrigger className="-ml-1" />
       <div className="flex flex-1 items-center gap-4">
         <div className="relative w-full max-w-md">
@@ -46,7 +46,7 @@ export function AppHeader() {
           <Input
             type="search"
             placeholder="Search your favourite books"
-            className="h-9 w-full rounded-full bg-muted/50 pl-9 pr-4"
+            className="h-9 w-full rounded-full border-border bg-muted/40 pl-9 pr-4"
           />
         </div>
       </div>

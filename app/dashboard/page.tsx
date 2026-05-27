@@ -70,10 +70,10 @@ export default async function DashboardPage() {
 
   return (
     <DashboardLayout>
-      <div className="dashboard-glass-card rounded-xl p-4 md:p-6 space-y-6">
+      <div className="space-y-6 rounded-2xl border bg-card p-4 shadow-sm md:p-6">
         {isLibrarian && (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Card>
+            <Card className="rounded-xl shadow-none">
               <CardHeader className="flex flex-row items-center gap-2 space-y-0 pb-2">
                 <BookOpen className="size-5 text-muted-foreground" />
                 <span className="text-sm font-medium text-muted-foreground">
@@ -84,7 +84,7 @@ export default async function DashboardPage() {
                 <p className="text-2xl font-bold">{stats.totalBooks}</p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="rounded-xl shadow-none">
               <CardHeader className="flex flex-row items-center gap-2 space-y-0 pb-2">
                 <ClipboardList className="size-5 text-muted-foreground" />
                 <span className="text-sm font-medium text-muted-foreground">
@@ -95,7 +95,7 @@ export default async function DashboardPage() {
                 <p className="text-2xl font-bold">{stats.activeLoans}</p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="rounded-xl shadow-none">
               <CardHeader className="flex flex-row items-center gap-2 space-y-0 pb-2">
                 <Users className="size-5 text-muted-foreground" />
                 <span className="text-sm font-medium text-muted-foreground">
@@ -106,7 +106,7 @@ export default async function DashboardPage() {
                 <p className="text-2xl font-bold">{stats.totalUsers}</p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="rounded-xl shadow-none">
               <CardHeader className="flex flex-row items-center gap-2 space-y-0 pb-2">
                 <AlertTriangle className="size-5 text-destructive" />
                 <span className="text-sm font-medium text-muted-foreground">
@@ -124,7 +124,7 @@ export default async function DashboardPage() {
 
         {!isLibrarian && (
           <div className="grid gap-4 sm:grid-cols-2">
-            <Card>
+            <Card className="rounded-xl shadow-none">
               <CardHeader className="flex flex-row items-center gap-2 space-y-0 pb-2">
                 <ClipboardList className="size-5 text-muted-foreground" />
                 <span className="text-sm font-medium text-muted-foreground">
@@ -135,7 +135,7 @@ export default async function DashboardPage() {
                 <p className="text-2xl font-bold">{stats.myLoans}</p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="rounded-xl shadow-none">
               <CardHeader className="flex flex-row items-center gap-2 space-y-0 pb-2">
                 <BookMarked className="size-5 text-muted-foreground" />
                 <span className="text-sm font-medium text-muted-foreground">
