@@ -33,8 +33,15 @@ export default function SettingsPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const [prefTheme, setPrefTheme] = useState<'light' | 'dark'>('light');
+  const [prefTheme, setPrefTheme] = useState<'light' | 'dark' | 'system'>('system');
   const [prefNotifications, setPrefNotifications] = useState(true);
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'system') {
+      setPrefTheme(savedTheme);
+    }
+  }, []);
 
   useEffect(() => {
     if (status !== 'authenticated') return;
@@ -63,10 +70,14 @@ export default function SettingsPage() {
     if (!raw) return;
     try {
       const parsed = JSON.parse(raw) as {
-        theme?: 'light' | 'dark';
+        theme?: 'light' | 'dark' | 'system';
         notifications?: boolean;
       };
-      if (parsed.theme === 'light' || parsed.theme === 'dark') {
+      if (
+        parsed.theme === 'light' ||
+        parsed.theme === 'dark' ||
+        parsed.theme === 'system'
+      ) {
         setPrefTheme(parsed.theme);
       }
       if (typeof parsed.notifications === 'boolean') {
@@ -87,6 +98,20 @@ export default function SettingsPage() {
       })
     );
   }, [user?.id, prefTheme, prefNotifications]);
+
+  useEffect(() => {
+    localStorage.setItem('theme', prefTheme);
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const applyTheme = () => {
+      const isDark = prefTheme === 'dark' || (prefTheme === 'system' && mediaQuery.matches);
+      document.documentElement.classList.toggle('dark', isDark);
+    };
+
+    applyTheme();
+    mediaQuery.addEventListener('change', applyTheme);
+    return () => mediaQuery.removeEventListener('change', applyTheme);
+  }, [prefTheme]);
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -242,6 +267,13 @@ export default function SettingsPage() {
                       onClick={() => setPrefTheme('dark')}
                     >
                       Dark
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={prefTheme === 'system' ? 'default' : 'outline'}
+                      onClick={() => setPrefTheme('system')}
+                    >
+                      System
                     </Button>
                   </div>
                 </div>
