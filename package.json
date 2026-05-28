@@ -15,7 +15,8 @@
     "db:fix-users": "tsx scripts/fix-users-constraint.ts",
     "db:ensure-users": "tsx scripts/ensure-users-correct.ts",
     "db:diagnose": "tsx scripts/diagnose-users-error.ts",
-    "db:create-admin": "tsx scripts/create-admin.ts"
+    "db:create-admin": "tsx scripts/create-admin.ts",
+    "db:seed-books": "tsx scripts/seed-books.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
